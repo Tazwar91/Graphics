@@ -1,19 +1,68 @@
 #include <windows.h> // for MS Windows
+#include <mmsystem.h>
 #include <GL/glut.h>
 #include <iostream>
 #include<math.h>>
 # define PI           3.14159265358979323846
 using namespace std;
 
-void renderBitmapString(float x, float y, float z, void *font, char *string)
+
+
+// Initial positions and speeds
+bool skyState = true;
+GLfloat posf1x, posf1y, posf2x, posf2y, posfx, posfy, posVx; // Position for fish 2
+GLfloat speed = 0.0025f;
+GLfloat speed1 = 0.01f;
+GLfloat speed2 = -0.017f;
+GLfloat speedv = -0.01f;
+GLfloat iP = 0.0f;
+
+
+void Idle()
 {
-    char *c;
-    glRasterPos3f(x, y,z);
-    for (c=string; *c != '\0'; c++)
-    {
-        glutBitmapCharacter(font, *c);
-    }
+    iP += 0.4f; // Increment rotation angle for smooth animation
+    glutPostRedisplay(); // Request a redraw
 }
+
+
+
+void update(int value)
+{
+    //for bird right to left
+    posf1x -= speed1;
+    if (posf1x <= -1.0f)
+    {
+        posf1x = 1.0f;
+    }
+
+
+    //for bird left to right
+    posf2x -= speed2;
+    if (posf2x >= 2.0f)
+    {
+        posf2x = -1.0f;
+    }
+
+
+    //for cloud
+    posfx -= speed;
+    if (posfx <= -1.0f)
+    {
+        posfx = 1.0f;
+    }
+
+    //for vehicle left to right
+    posVx -= speed2;
+    if (posVx >= 1.1f)
+    {
+        posVx = -1.1f;
+    }
+
+
+    glutPostRedisplay(); // Redraw the screen
+    glutTimerFunc(100, update, 0); // Continue updating at 100ms intervals
+}
+
 
 void drawLine (float x, float y, float a, float b)
 {
@@ -118,6 +167,7 @@ void OmniRoute (float x, float y)
     glVertex2f (x+0.18f, y+0.01f);
     glEnd();
 
+
     //pankha center
     glLineWidth (3);
     glColor3f(0.0f, 0.0f, 0.0f);
@@ -125,6 +175,14 @@ void OmniRoute (float x, float y)
     glVertex2f (x, y+0.18f);
     glVertex2f (x, y+0.21f);
     glEnd();
+
+
+    //for rotation:
+    glPushMatrix();
+    glTranslatef(x, y + 0.1f, 0.0f); // Move to the fan center
+    glRotatef(iP, 0.0f, 1.0f, 0.0f); // Rotate around the center
+    glTranslatef(-x, -(y + 0.1f), 0.0f); // Move back to original position
+
 
     //pankha right
     glLineWidth (3);
@@ -149,7 +207,11 @@ void OmniRoute (float x, float y)
     glVertex2f (x, y+0.21f);
     glVertex2f (x-0.16f, y+0.22f);
     glEnd();
+
+    glPopMatrix();
+
 }
+
 
 void gridLine (float x, float xL, float y, float yL, float is, float ie)
 {
@@ -296,150 +358,8 @@ void buildingTall (float x, float y)
     windowBig (x, y, 0.0f, 0.35f);
 }
 
-void cloud (float x, float y)
+void buildlingUpperLayerAll ()
 {
-    glColor3f(1.0f, 1.0f, 1.0f);
-    drawFiledEllipse (x, y, 0.06f, 0.06f, 100);
-    drawFiledEllipse (x+0.05f, y+0.05f, 0.05f, 0.06f, 100);
-    drawFiledEllipse (x+0.05f, y-0.05f, 0.05f, 0.06f, 100);
-    drawFiledEllipse (x+0.10f, y+0.04f, 0.05f, 0.08f, 100);
-    drawFiledEllipse (x+0.10f, y-0.04f, 0.05f, 0.08f, 100);
-    drawFiledEllipse (x+0.15f, y, 0.06f, 0.06f, 100);
-}
-
-void bird (float x, float y)
-{
-    //left wing
-    glColor3f(0.0f, 0.0f, 0.0f);
-    glBegin (GL_POLYGON);
-    glVertex2f (x-0.03f, y+0.03f);
-    glVertex2f (x-0.07f, y);
-    glVertex2f (x-0.03f, y+0.02f);
-    glEnd();
-    glBegin (GL_POLYGON);
-    glVertex2f (x, y);
-    glVertex2f (x-0.03f, y+0.03f);
-    glVertex2f (x-0.03f, y+0.02f);
-    glEnd();
-
-    //right wing
-    glColor3f(0.0f, 0.0f, 0.0f);
-    glBegin (GL_POLYGON);
-    glVertex2f (x+0.03f, y+0.03f);
-    glVertex2f (x+0.07f, y);
-    glVertex2f (x+0.03f, y+0.02f);
-    glEnd();
-    glBegin (GL_POLYGON);
-    glVertex2f (x, y);
-    glVertex2f (x+0.03f, y+0.03f);
-    glVertex2f (x+0.03f, y+0.02f);
-    glEnd();
-
-    //center
-    drawFiledEllipse (x, y, 0.006f, 0.006f, 10);
-}
-
-void road ()
-{
-    glColor3f(0.25f, 0.25f, 0.25f);
-    glBegin (GL_POLYGON);
-    glVertex2f (-1.0f, -0.1f);
-    glVertex2f (-1.0f, -0.25f);
-    glVertex2f (1.0f, -0.75f);
-    glVertex2f (1.0f, -0.55f);
-    glEnd();
-
-    glLineWidth (2);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glBegin (GL_LINES);
-    glVertex2f (1.0f, -0.55f);
-    glVertex2f (-1.0f, -0.1f);
-    glVertex2f (-1.0f, -0.25f);
-    glVertex2f (1.0f, -0.75f);
-    glVertex2f (-1.0f, -0.17f);
-    glVertex2f (1.0f, -0.65f);
-    glEnd();
-}
-
-
-/*
-//sunny day
-void sky ()
-{
-    glColor3ub(196, 231, 255);
-    glBegin (GL_POLYGON);
-    glVertex2f (-1.0f, 1.0f);
-    glVertex2f (1.0f, 1.0f);
-    glVertex2f (1.0f, -0.7f);
-    glVertex2f (-1.0f, -0.70f);
-    glEnd();
-
-    glColor3ub(198, 235, 255);
-    glBegin (GL_POLYGON);
-    glVertex2f (-1.0f, -0.7f);
-    glVertex2f (1.0f, -0.7f);
-    glVertex2f (1.0f, -1.0f);
-    glVertex2f (-1.0f, -1.0f);
-    glEnd();
-}
-*/
-
-//rainy day
-void sky ()
-{
-    glBegin(GL_POLYGON);
-    glColor3ub(198, 235, 255); // sky blue
-    glVertex2f(0.0f, 1.0f);
-    glColor3ub(5, 167, 247);
-    glVertex2f(1.0f, 1.0f);
-    glColor3ub(0, 0, 0); // black
-    glVertex2f(1.0f, -1.0f);
-    glColor3ub(20, 22, 61); // navy blue
-    glVertex2f(-1.0f, -1.0f);
-    glColor3ub(5, 167, 247);
-    glVertex2f(-1.0f, 1.0f);
-    glColor3ub(5, 167, 247); // sky blue
-    glVertex2f(0.0f, 1.0f);
-    glEnd();
-}
-
-void display()
-{
-    glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT); // Clear the color buffer (background)
-
-    sky ();
-
-    //clouds
-    cloud (0.5f, 0.5f);
-    cloud (-0.5f, 0.5f);
-    cloud (0.0f,0.2f);
-    cloud (0.8f,0.2f);
-    cloud (-0.8f,0.2f);
-    cloud (-0.9f,0.8f);
-    cloud (0.1f,0.7f);
-
-    //birds
-    bird(0.5f, 0.5f);
-    bird(0.4f, 0.4f);
-    bird(0.3f, 0.3f);
-    bird(0.2f, 0.3f);
-    bird(0.3f, 0.4f);
-    bird(0.4f, 0.5f);
-    bird(0.2f, 0.4f);
-    bird(0.1f, 0.4f);
-    bird(0.1f, 0.5f);
-    bird(0.0f, 0.5f);
-
-
-    bird(-0.5f, 0.5f);
-    bird(-0.4f, 0.4f);
-    bird(-0.3f, 0.3f);
-    bird(-0.6f, 0.5f);
-    bird(-0.7f, 0.4f);
-    bird(-0.8f, 0.3f);
-
-
     // upper building layer
     glColor3ub(101, 165, 36); // grass green
     buildingTall (-1.0f, -0.2f);
@@ -483,12 +403,11 @@ void display()
     buildingTall (0.9f, -0.60f);
     glColor3ub(101, 165, 36); // grass green
     building2Block (1.0f, -0.60f);
+}
 
-    road();
 
-
-    OmniRoute (-0.3f, 0.3f);
-
+void buildlingLowerLayerAll ()
+{
     // Lower Building 1st layer
     glColor3ub(37, 90, 115);// peacock blue
     building1Block (-1.0f, -0.5f);
@@ -616,11 +535,218 @@ void display()
     buildingTall(0.9f, -1.0f);
     glColor3ub(95, 237, 252); // sky blue
     buildingTall(1.0f, -1.02f);
+}
 
+
+void cloud (float x, float y)
+{
+    glColor3f(1.0f, 1.0f, 1.0f);
+    drawFiledEllipse (x, y, 0.06f, 0.06f, 100);
+    drawFiledEllipse (x+0.05f, y+0.05f, 0.05f, 0.06f, 100);
+    drawFiledEllipse (x+0.05f, y-0.05f, 0.05f, 0.06f, 100);
+    drawFiledEllipse (x+0.10f, y+0.04f, 0.05f, 0.08f, 100);
+    drawFiledEllipse (x+0.10f, y-0.04f, 0.05f, 0.08f, 100);
+    drawFiledEllipse (x+0.15f, y, 0.06f, 0.06f, 100);
+}
+
+void cloudAll ()
+{
+    glPushMatrix();
+    glTranslatef(posfx, posfy, 0.0f);
+    cloud (0.5f, 0.5f);
+    cloud (-0.5f, 0.5f);
+    cloud (0.0f,0.2f);
+    cloud (0.8f,0.2f);
+    cloud (-0.8f,0.2f);
+    cloud (-0.9f,0.8f);
+    cloud (0.1f,0.7f);
+
+
+    // right outside screen
+    cloud (1.5f, 0.5f);
+    cloud (1.0f,0.2f);
+    cloud (1.8f,0.2f);
+    cloud (1.9f,0.8f);
+    cloud (1.1f,0.7f);
+    glPopMatrix();
+
+}
+
+void bird (float x, float y)
+{
+    //left wing
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glBegin (GL_POLYGON);
+    glVertex2f (x-0.03f, y+0.03f);
+    glVertex2f (x-0.07f, y);
+    glVertex2f (x-0.03f, y+0.02f);
+    glEnd();
+    glBegin (GL_POLYGON);
+    glVertex2f (x, y);
+    glVertex2f (x-0.03f, y+0.03f);
+    glVertex2f (x-0.03f, y+0.02f);
+    glEnd();
+
+    //right wing
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glBegin (GL_POLYGON);
+    glVertex2f (x+0.03f, y+0.03f);
+    glVertex2f (x+0.07f, y);
+    glVertex2f (x+0.03f, y+0.02f);
+    glEnd();
+    glBegin (GL_POLYGON);
+    glVertex2f (x, y);
+    glVertex2f (x+0.03f, y+0.03f);
+    glVertex2f (x+0.03f, y+0.02f);
+    glEnd();
+
+    //center
+    drawFiledEllipse (x, y, 0.006f, 0.006f, 10);
+}
+
+void birdAll ()
+{
+    //birds right to left
+    glPushMatrix();
+    glTranslatef(posf1x, posf1y, 0.0f);
+    bird(0.5f, 0.5f);
+    bird(0.4f, 0.4f);
+    bird(0.3f, 0.3f);
+    bird(0.2f, 0.3f);
+    bird(0.3f, 0.4f);
+    bird(0.4f, 0.5f);
+    bird(0.2f, 0.4f);
+    bird(0.1f, 0.4f);
+    bird(0.1f, 0.5f);
+    bird(0.0f, 0.5f);
+    glPopMatrix();
+
+    //birds left to right
+    glPushMatrix();
+    glTranslatef(posf2x, posf2y, 0.0f);
+    bird(-0.5f, 0.8f);
+    bird(-0.4f, 0.7f);
+    bird(-0.3f, 0.6f);
+    bird(-0.6f, 0.8f);
+    bird(-0.7f, 0.7f);
+    bird(-0.8f, 0.6f);
+    glPopMatrix();
+
+}
+
+void road ()
+{
+    glColor3f(0.25f, 0.25f, 0.25f);
+    glBegin (GL_POLYGON);
+    glVertex2f (-1.0f, -0.1f);
+    glVertex2f (-1.0f, -0.25f);
+    glVertex2f (1.0f, -0.75f);
+    glVertex2f (1.0f, -0.55f);
+    glEnd();
+
+    glLineWidth (2);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glBegin (GL_LINES);
+    glVertex2f (1.0f, -0.55f);
+    glVertex2f (-1.0f, -0.1f);
+    glVertex2f (-1.0f, -0.25f);
+    glVertex2f (1.0f, -0.75f);
+    glVertex2f (-1.0f, -0.17f);
+    glVertex2f (1.0f, -0.65f);
+    glEnd();
+}
+
+
+
+void sunnyDay ()
+{
+    glBegin(GL_POLYGON);
+    glColor3ub(198, 235, 255); // sky blue
+    glVertex2f(0.0f, 1.0f);
+    glColor3ub(196, 231, 255); //light sky blue
+    glVertex2f(0.95f, 1.0f);
+    glColor3ub(5, 167, 247); //blue
+    glVertex2f(1.0f, 1.0f);
+    glColor3ub(196, 231, 255); //light sky blue
+    glVertex2f(1.0f, -1.0f);
+    glVertex2f(-1.0f, -1.0f);
+    glColor3ub(5, 167, 247); //blue
+    glVertex2f(-1.0f, 1.0f);
+    glColor3ub(196, 231, 255); //light sky blue
+    glVertex2f(-0.95f, 1.0f);
+    glColor3ub(5, 167, 247); // sky blue
+    glVertex2f(0.0f, 1.0f);
+    glEnd();
+}
+
+
+void rainyDay ()
+{
+    glBegin(GL_POLYGON);
+    glColor3ub(198, 235, 255); // sky blue
+    glVertex2f(0.0f, 1.0f);
+    glColor3ub(5, 167, 247);
+    glVertex2f(1.0f, 1.0f);
+    glColor3ub(0, 0, 0); // black
+    glVertex2f(1.0f, -1.0f);
+    glColor3ub(20, 22, 61); // navy blue
+    glVertex2f(-1.0f, -1.0f);
+    glColor3ub(5, 167, 247);
+    glVertex2f(-1.0f, 1.0f);
+    glColor3ub(5, 167, 247); // sky blue
+    glVertex2f(0.0f, 1.0f);
+    glEnd();
+}
+
+
+void sky ()
+{
+    if (skyState == false)
+    {
+        sunnyDay ();
+    }
+    else if (skyState == true)
+    {
+        rainyDay ();
+    }
+}
+
+
+void updateSky(int value)
+{
+    skyState = !skyState;
+
+    glutPostRedisplay();
+    glutTimerFunc(10000, updateSky, 0);
+}
+
+
+
+
+void display()
+{
+    glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT); // Clear the color buffer (background)
+
+    sky ();
+    cloudAll();
+    birdAll ();
+
+    buildlingUpperLayerAll ();
+
+    road();
+
+    glPushMatrix();
+    glTranslatef(posVx, 0.0f, 0.0f);
+    OmniRoute (-0.1f, 0.3f);
+    glPopMatrix();
+
+    buildlingLowerLayerAll ();
 
     glFlush();
     // Render now
 }
+
 
 int main(int argc, char** argv)
 {
@@ -629,6 +755,11 @@ int main(int argc, char** argv)
     glutInitWindowPosition(30, 20);
     glutCreateWindow("OpenGL Setup Test");
     glutDisplayFunc(display);
+    glutTimerFunc(100, update, 0); // Start the update function to animate both objects
+    glutTimerFunc(100, updateSky, 0); // Start the update function to animate both objects
+    sndPlaySound("2.wav",SND_ASYNC);
+    //PlaySound(TEXT("2.wav"), NULL, SND_SYNC);
+    glutIdleFunc(Idle);//glutIdleFunc sets the global idle callback to be func so a GLUT program can perform background processing tasks or continuous animation when window system events are not being received.
     glutMainLoop();
     return 0;
 }
